@@ -51,7 +51,7 @@ const UploadConfirmationScreen = ({
       form.append("lat", String(location.coords.latitude));
       form.append("lon", String(location.coords.longitude));
 
-      const uploadUrl = `${API_BASE_URL}/api/v1/photos/upload-photo`;
+      const uploadUrl = `${API_BASE_URL}api/v1/photos/upload-photo`;
       console.log("Uploading to:", uploadUrl);
       console.log("Token:", token.substring(0, 20) + "...");
 

@@ -101,7 +101,7 @@ const RegisterUserScreen = ({ navigation }: ScreenProps<"RegisterUserScreen">) =
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/signup`, {
+      const response = await fetch(`${API_BASE_URL}api/v1/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
