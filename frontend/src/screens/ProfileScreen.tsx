@@ -94,17 +94,71 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
   };
 
   useEffect(() => {
-    if (user) {
-      setProfile((prev) => ({
-        ...prev,
-        name: user.firstName || user.username || "User",
-        collegeName: (user.publicMetadata?.collegeName as string) || "UCLA",
-        phoneNumber: (user.publicMetadata?.phoneNumber as string) || "",
-        year: (user.publicMetadata?.year as string) || "'25",
-        profileImage: user.imageUrl || null,
-      }));
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    setIsLoading(true);
+    try {
+      const token = await getToken();
+      
+      if (!token) {
+        // Fall back to Clerk user data if not authenticated
+        if (user) {
+          setProfile((prev) => ({
+            ...prev,
+            name: user.firstName || user.username || "User",
+            collegeName: (user.publicMetadata?.collegeName as string) || "",
+            phoneNumber: (user.publicMetadata?.phoneNumber as string) || "",
+            year: (user.publicMetadata?.year as string) || "",
+            profileImage: user.imageUrl || null,
+          }));
+        }
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/get-profile`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.user) {
+        setProfile({
+          name: data.user.name || "",
+          collegeName: data.user.collegeName || "",
+          phoneNumber: data.user.phoneNumber || "",
+          year: data.user.year || "",
+          profileImage: data.user.profileImage || null,
+          bio: data.user.bio || "Chasing sunsets & finals",
+        });
+      } else {
+        // Fall back to Clerk user data
+        if (user) {
+          setProfile((prev) => ({
+            ...prev,
+            name: user.firstName || user.username || "User",
+            profileImage: user.imageUrl || null,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      // Fall back to Clerk user data on error
+      if (user) {
+        setProfile((prev) => ({
+          ...prev,
+          name: user.firstName || user.username || "User",
+          profileImage: user.imageUrl || null,
+        }));
+      }
+    } finally {
+      setIsLoading(false);
     }
-  }, [user]);
+  };
 
   const openEditModal = () => {
     setEditForm({
