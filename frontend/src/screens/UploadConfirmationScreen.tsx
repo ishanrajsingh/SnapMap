@@ -111,7 +111,8 @@ const UploadConfirmationScreen = ({
         { text: "OK", onPress: () => navigation.navigate("HomeScreen") },
       ]);
     } catch (error: any) {
-      Alert.alert("Upload failed", error.message);
+      console.error("Upload failed:", error);
+      Alert.alert("Upload Failed", error?.message || "Something went wrong while uploading the photo(s).");
     } finally {
       setIsUploading(false);
     }
