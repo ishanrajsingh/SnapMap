@@ -66,7 +66,10 @@ export const uploadPhoto = async (req, res) => {
       eventId: null,
     });
 
-    console.log("✅ Photo uploaded to MongoDB:", photo._id.toString());
+    console.log("✅ Single photo entry created in MongoDB:", {
+      id: photo._id,
+      url: photo.imageUrl
+    });
     return res.status(201).json({
       status: "success",
       photoId: photo._id,
@@ -147,7 +150,10 @@ export const testUploadPhoto = async (req, res) => {
       eventId: null,
     });
 
-    console.log("✅ TEST Photo uploaded to MongoDB:", photo._id.toString());
+    console.log("✅ TEST Single photo entry created in MongoDB:", {
+      id: photo._id,
+      url: photo.imageUrl
+    });
     return res.status(201).json({
       status: "success",
       photoId: photo._id,
@@ -164,7 +170,7 @@ export const testUploadPhoto = async (req, res) => {
 };
 
 
-// multiple uploads added here//
+
 
 export const uploadPhotos = async(req,res)=>{
   try{
@@ -187,7 +193,7 @@ export const uploadPhotos = async(req,res)=>{
       return res.status(404).json({ message: "User not registered" });
     }
 
-    const uploadedPhotos = [];
+    const imageUrls = [];
 
     for (const file of req.files) {
       const fileName = buildFileName(file.originalname, req.userId);
@@ -207,16 +213,15 @@ export const uploadPhotos = async(req,res)=>{
         eventId: null,
       });
 
-      uploadedPhotos.push({
-        photoId: photo._id,
-        imageUrl,
-      });
-    }
+    console.log("✅ Multi-photo entry created in MongoDB:", {
+      id: photo._id,
+      urls: photo.imageUrl
+    });
 
-        return res.status(201).json({
+    return res.status(201).json({
       status: "success",
-      count: uploadedPhotos.length,
-      photos: uploadedPhotos,
+      photoId: photo._id,
+      urls: photo.imageUrl,
     });
   } catch (error) {
     console.error("Upload multiple photos error:", error);
