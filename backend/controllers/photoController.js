@@ -105,7 +105,7 @@ export const getAllPhotos = async (req, res) => {
 };
 
 // api/v1/photos/get-user-photos/:clerkId
-export const getUserPhotos = async (req, res) => {
+export const getUserPhotosByClerkId = async (req, res) => {
   const clerkId = req.params.clerkId;
 
   console.log(`GET user-photos - ClerkId: ${clerkId}`)
