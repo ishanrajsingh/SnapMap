@@ -3,6 +3,8 @@ import path from "path";
 import Photo from "../models/Photo.js";
 import User from "../models/User.js";
 import { singleUploadToAzure, multiUploadToAzure } from "../utils/azure.js";
+import { createProducer } from "../utils/kafka.js";
+import { PHOTO_UPLOADS } from "../utils/kafkaTopics.js";
 
 const buildFileName = (originalName, clerkUserId) => {
   const ext = path.extname(originalName || "").toLowerCase();
@@ -10,6 +12,38 @@ const buildFileName = (originalName, clerkUserId) => {
   const id = crypto.randomUUID();
   return `${clerkUserId}/${Date.now()}-${id}${safeExt}`;
 };
+
+//Emit Kafka event after successful photo upload
+async function emitPhotoUploadEvent(photo) {
+  try {
+    const producer = await createProducer();
+
+    const payload = {
+      photoId: photo._id.toString(),
+      timestamp: photo.timestamp.toISOString(),
+      location: photo.location?.coordinates, // [lng, lat]
+      storageUrl: Array.isArray(photo.imageUrl)
+        ? photo.imageUrl[0]
+        : photo.imageUrl,
+    };
+
+    producer
+      .send({
+        topic: PHOTO_UPLOADS,
+        messages: [{ value: JSON.stringify(payload) }],
+      })
+      .catch((err) => {
+        console.error("Kafka publish failed:", err.message);
+      })
+      .finally(() => {
+        producer.disconnect().catch(() => {});
+      });
+  } catch (err) {
+    // Never block upload
+    console.error("Kafka init error:", err.message);
+  }
+}
+
 
 export const uploadPhoto = async (req, res) => {
   try {
@@ -19,10 +53,10 @@ export const uploadPhoto = async (req, res) => {
       "File info:",
       req.file
         ? {
-            fieldname: req.file.fieldname,
-            size: req.file.size,
-            mimetype: req.file.mimetype,
-          }
+          fieldname: req.file.fieldname,
+          size: req.file.size,
+          mimetype: req.file.mimetype,
+        }
         : "No file"
     );
     console.log("UserId:", req.userId);
@@ -58,7 +92,7 @@ export const uploadPhoto = async (req, res) => {
     const photo = await Photo.create({
       userId: user._id,
       clerkUserId: req.userId,
-      imageUrl : [imageUrl],
+      imageUrl: [imageUrl],
       caption: caption || "",
       location: { type: "Point", coordinates: [longitude, latitude] },
       timestamp: new Date(),
@@ -70,6 +104,7 @@ export const uploadPhoto = async (req, res) => {
       id: photo._id,
       url: photo.imageUrl
     });
+    emitPhotoUploadEvent(photo);
     return res.status(201).json({
       status: "success",
       photoId: photo._id,
@@ -234,6 +269,7 @@ export const testUploadPhoto = async (req, res) => {
       id: photo._id,
       url: photo.imageUrl
     });
+    emitPhotoUploadEvent(photo);
     return res.status(201).json({
       status: "success",
       photoId: photo._id,
@@ -242,8 +278,8 @@ export const testUploadPhoto = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in test upload:", error);
-    return res.status(500).json({ 
-      message: "Internal server error: " + error.message 
+    return res.status(500).json({
+      message: "Internal server error: " + error.message
     });
   }
 };
@@ -251,23 +287,23 @@ export const testUploadPhoto = async (req, res) => {
 
 
 
-export const uploadPhotos = async(req,res)=>{
-  try{
-    const{lat,lon,caption} = req.body || {};
+export const uploadPhotos = async (req, res) => {
+  try {
+    const { lat, lon, caption } = req.body || {};
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lon);
 
-    if(!req.userId){
-      return res.status(401).json({ message: "Unauthorized"});
+    if (!req.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
-        if (!req.files || req.files.length === 0) {
+    if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: "No photos provided" });
     }
 
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
       return res.status(400).json({ message: "Invalid or missing lat/lon" });
     }
-       const user = await User.findOne({ clerkUserId: req.userId });
+    const user = await User.findOne({ clerkUserId: req.userId });
     if (!user) {
       return res.status(404).json({ message: "User not registered" });
     }
@@ -301,7 +337,7 @@ export const uploadPhotos = async(req,res)=>{
       id: photo._id,
       urls: photo.imageUrl
     });
-
+    emitPhotoUploadEvent(photo);
     return res.status(201).json({
       status: "success",
       photoId: photo._id,
@@ -314,4 +350,5 @@ export const uploadPhotos = async(req,res)=>{
     });
 
   }
+
 };
