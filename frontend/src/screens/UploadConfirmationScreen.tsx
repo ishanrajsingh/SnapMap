@@ -30,10 +30,16 @@ const UploadConfirmationScreen = ({
 
   const [isUploading, setIsUploading] = useState(false);
   const [caption, setCaption] = useState("");
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    success: boolean;
+  }>({
+    visible: false,
+    message: "",
+    success: true,
+  });
 
-  // Normalize input to an array of photos
   const photosToUpload = photos || (photo ? [photo] : []);
 
   if (photosToUpload.length === 0) {
@@ -94,11 +100,17 @@ const UploadConfirmationScreen = ({
         throw new Error("Upload failed");
       }
 
-      // Show success toast instead of alert
-      setShowSuccessToast(true);
+      setToast({
+        visible: true,
+        message: "Photo uploaded successfully",
+        success: true,
+      });
     } catch (error) {
-      // Show error toast instead of alert
-      setShowErrorToast(true);
+      setToast({
+        visible: true,
+        message: "Upload failed",
+        success: false,
+      });
     } finally {
       setIsUploading(false);
     }
@@ -110,7 +122,9 @@ const UploadConfirmationScreen = ({
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backIcon}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.header}>New Post ({photosToUpload.length})</Text>
+        <Text style={styles.header}>
+          New Post ({photosToUpload.length})
+        </Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -130,7 +144,6 @@ const UploadConfirmationScreen = ({
               ]}
             >
               <Image source={{ uri: p.uri }} style={styles.previewImage} />
-
               <View style={styles.locationBadge}>
                 <Text style={styles.locationText}>
                   {photosToUpload.length > 1
@@ -168,7 +181,6 @@ const UploadConfirmationScreen = ({
           value={caption}
           onChangeText={setCaption}
         />
-        <Text style={styles.emoji}>🙂</Text>
       </View>
 
       <TouchableOpacity
@@ -181,7 +193,7 @@ const UploadConfirmationScreen = ({
             ? "Uploading..."
             : `Post ${photosToUpload.length} Photo${
                 photosToUpload.length > 1 ? "s" : ""
-              }  >`}
+              } >`}
         </Text>
       </TouchableOpacity>
 
@@ -189,21 +201,16 @@ const UploadConfirmationScreen = ({
         <Text style={styles.cancelText}>Cancel</Text>
       </TouchableOpacity>
 
-      {/* Success toast */}
       <Toast
-        visible={showSuccessToast}
-        message="Photo uploaded successfully"
+        visible={toast.visible}
+        message={toast.message}
+        success={toast.success}
         onHide={() => {
-          setShowSuccessToast(false);
-          navigation.navigate("HomeScreen");
+          setToast((prev) => ({ ...prev, visible: false }));
+          if (toast.success) {
+            navigation.navigate("HomeScreen");
+          }
         }}
-      />
-
-      {/* Error toast */}
-      <Toast
-        visible={showErrorToast}
-        message="Upload failed"
-        onHide={() => setShowErrorToast(false)}
       />
     </View>
   );

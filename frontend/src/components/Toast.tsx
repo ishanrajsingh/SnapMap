@@ -15,9 +15,10 @@ interface ToastProps {
   message: string;
   visible: boolean;
   onHide: () => void;
+  success: boolean;
 }
 
-const Toast: React.FC<ToastProps> = ({ message, visible, onHide }) => {
+const Toast: React.FC<ToastProps> = ({ message, visible, onHide, success }) => {
   const translateY = useRef(new Animated.Value(100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -74,7 +75,12 @@ const Toast: React.FC<ToastProps> = ({ message, visible, onHide }) => {
         end={{ x: 1, y: 0 }}
         style={styles.toast}
       >
-        <Ionicons name="checkmark-circle" size={22} color="#FFFFFF" />
+        <Ionicons
+          name={success ? "checkmark-circle" : "close-circle"}
+          size={22}
+          color={success ? "#22C55E" : "#EF4444"}
+        />
+
         <Text style={styles.text}>{message}</Text>
       </LinearGradient>
     </Animated.View>

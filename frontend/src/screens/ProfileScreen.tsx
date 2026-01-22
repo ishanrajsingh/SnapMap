@@ -58,8 +58,16 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
 
   const [yearDropdownVisible, setYearDropdownVisible] = useState(false);
 
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    success: boolean;
+  }>({
+    visible: false,
+    message: "",
+    success: true,
+  });
+
 
   const stats = {
     snaps: totalSnaps,
@@ -238,21 +246,25 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
           year: editForm.year || prev.year,
           profileImage: data.user?.profileImage || prev.profileImage,
         }));
+
         closeEditModal();
-        setShowSuccessToast(true);
+        setToast({
+          visible: true,
+          message: "Profile updated successfully",
+          success: true,
+        });
       } else {
-        setShowErrorToast(true);
+        setToast({
+          visible: true,
+          message: "Failed to update profile",
+          success: false,
+        });
       }
-    } catch {
-      setShowErrorToast(true);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleSettingsPress = () => {
-    navigation.navigate("SettingsScreen");
-  };
 
   if (isLoading || !profile) {
     return (
@@ -262,6 +274,10 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
       </View>
     );
   }
+
+  const handleSettingsPress = () => {
+    navigation.navigate("SettingsScreen");
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -560,17 +576,15 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
       </Modal>
 
       <Toast
-        visible={showSuccessToast}
-        message="Profile updated successfully"
-        onHide={() => setShowSuccessToast(false)}
+        visible={toast.visible}
+        message={toast.message}
+        success={toast.success}
+        onHide={() =>
+          setToast((prev) => ({ ...prev, visible: false }))
+        }
       />
-      <Toast
-        visible={showErrorToast}
-        message="Failed to update profile"
-        onHide={() => setShowErrorToast(false)}
-      />
+
     </SafeAreaView>
   );
 };
-
-export default ProfileScreen;
+  export default ProfileScreen;
