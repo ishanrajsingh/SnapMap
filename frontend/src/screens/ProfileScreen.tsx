@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -68,7 +67,6 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
     success: true,
   });
 
-
   const stats = {
     snaps: totalSnaps,
     views: "14.5k",
@@ -137,11 +135,11 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
     try {
       setIsGalleryLoading(true);
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/photos/get-user-photos/${user.id}`
+        `${API_BASE_URL}/api/v1/photos/get-user-photos/${user.id}`,
       );
       const rawData: (string | string[])[] = await response.json();
       const imageUrls: string[] = rawData.flatMap((u) =>
-        Array.isArray(u) ? u : [u]
+        Array.isArray(u) ? u : [u],
       );
       setGalleryImages(imageUrls);
       setTotalSnaps(imageUrls.length);
@@ -176,7 +174,7 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
     if (!permissionResult.granted) {
       Alert.alert(
         "Permission Required",
-        "Please allow access to your photo library."
+        "Please allow access to your photo library.",
       );
       return;
     }
@@ -208,13 +206,15 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
       }
 
       const formData = new FormData();
-      if (editForm.name !== profile.name) formData.append("name", editForm.name);
+      if (editForm.name !== profile.name)
+        formData.append("name", editForm.name);
       if (editForm.bio !== profile.bio) formData.append("bio", editForm.bio);
       if (editForm.collegeName !== profile.collegeName)
         formData.append("collegeName", editForm.collegeName);
       if (editForm.phoneNo !== profile.phoneNumber)
         formData.append("phoneNo", editForm.phoneNo);
-      if (editForm.year !== profile.year) formData.append("year", editForm.year);
+      if (editForm.year !== profile.year)
+        formData.append("year", editForm.year);
 
       if (selectedImage) {
         formData.append("profileImg", {
@@ -230,7 +230,7 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
           body: formData,
-        }
+        },
       );
 
       const rawText = await response.text();
@@ -265,6 +265,9 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
     }
   };
 
+  const handleViewAllUploads = () => {
+    navigation.navigate("MyUploadsScreen");
+  };
 
   if (isLoading || !profile) {
     return (
@@ -359,14 +362,28 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
         </View>
 
         <View style={styles.galleryContainer}>
+          <View style={styles.galleryHeader}>
+            <Text style={styles.galleryTitle}>Recent uploads</Text>
+            {galleryImages.length > 0 && (
+              <TouchableOpacity
+                style={styles.viewAllButton}
+                onPress={handleViewAllUploads}
+              >
+                <Text style={styles.viewAllText}>View All</Text>
+                <Ionicons name="chevron-forward" size={16} color="#FF6B8A" />
+              </TouchableOpacity>
+            )}
+          </View>
+
           <View style={styles.galleryGrid}>
             {isGalleryLoading ? (
               <ActivityIndicator size="large" color="#FF6B8A" />
-            ) : (
-              galleryImages.map((imageUrl, index) => (
+            ) : galleryImages.slice(0, 6).length ? (
+              galleryImages.slice(0, 6).map((imageUrl, index) => (
                 <TouchableOpacity
                   key={index}
                   style={styles.galleryImageContainer}
+                  onPress={handleViewAllUploads}
                 >
                   <Image
                     source={{ uri: imageUrl }}
@@ -375,6 +392,10 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
                   />
                 </TouchableOpacity>
               ))
+            ) : (
+              <Text style={styles.emptyGalleryText}>
+                No uploads yet. Start capturing memories!
+              </Text>
             )}
           </View>
         </View>
@@ -431,9 +452,7 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
                 <TextInput
                   style={styles.textInput}
                   value={editForm.name}
-                  onChangeText={(t) =>
-                    setEditForm((p) => ({ ...p, name: t }))
-                  }
+                  onChangeText={(t) => setEditForm((p) => ({ ...p, name: t }))}
                   placeholder="Enter your name"
                   placeholderTextColor="#999"
                 />
@@ -447,9 +466,7 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
                     { height: 80, textAlignVertical: "top" },
                   ]}
                   value={editForm.bio}
-                  onChangeText={(t) =>
-                    setEditForm((p) => ({ ...p, bio: t }))
-                  }
+                  onChangeText={(t) => setEditForm((p) => ({ ...p, bio: t }))}
                   placeholder="Write something about yourself"
                   placeholderTextColor="#999"
                   multiline
@@ -555,18 +572,13 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
                   <Text
                     style={{
                       fontSize: 16,
-                      color:
-                        editForm.year === option ? "#FF6B8A" : "#333",
+                      color: editForm.year === option ? "#FF6B8A" : "#333",
                     }}
                   >
                     {option}
                   </Text>
                   {editForm.year === option && (
-                    <Ionicons
-                      name="checkmark"
-                      size={20}
-                      color="#FF6B8A"
-                    />
+                    <Ionicons name="checkmark" size={20} color="#FF6B8A" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -579,12 +591,9 @@ const ProfileScreen = ({ navigation }: ScreenProps<"ProfileScreen">) => {
         visible={toast.visible}
         message={toast.message}
         success={toast.success}
-        onHide={() =>
-          setToast((prev) => ({ ...prev, visible: false }))
-        }
+        onHide={() => setToast((prev) => ({ ...prev, visible: false }))}
       />
-
     </SafeAreaView>
   );
 };
-  export default ProfileScreen;
+export default ProfileScreen;
